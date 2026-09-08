@@ -1,4 +1,5 @@
 
+import html
 import json
 
 import requests
@@ -165,55 +166,55 @@ def _gerar_tags(job) -> str:
 
 
 def notificar_vaga(job) -> bool:
-    linha_publicacao = f"<b>Publicada:</b> {job.publicado_em}\n" if job.publicado_em else ""
-    linha_modalidade = f"<b>Modalidade:</b> {job.modalidade}\n" if job.modalidade else ""
-    linha_contrato = f"<b>📋 Contrato:</b> {job.tipo_contrato}\n" if getattr(job, "tipo_contrato", "") else "<b>📋 Contrato:</b> Não especificado\n"
-    linha_salario = f"<b>💰 Remuneração:</b> {job.salario}\n" if getattr(job, "salario", "") else "<b>💰 Remuneração:</b> Não informada\n"
+    linha_publicacao = f"<b>Publicada:</b> {html.escape(str(job.publicado_em))}\n" if job.publicado_em else ""
+    linha_modalidade = f"<b>Modalidade:</b> {html.escape(str(job.modalidade))}\n" if job.modalidade else ""
+    linha_contrato = f"<b>📋 Contrato:</b> {html.escape(str(job.tipo_contrato))}\n" if getattr(job, "tipo_contrato", "") else "<b>📋 Contrato:</b> Não especificado\n"
+    linha_salario = f"<b>💰 Remuneração:</b> {html.escape(str(job.salario))}\n" if getattr(job, "salario", "") else "<b>💰 Remuneração:</b> Não informada\n"
     tags = _gerar_tags(job)
-    linha_tags = f"🏷️ <i>{tags}</i>\n\n" if tags else "\n"
+    linha_tags = f"🏷️ <i>{html.escape(tags)}</i>\n\n" if tags else "\n"
     texto = (
         f"🚨 <b>Nova vaga encontrada!</b>\n\n"
         f"{_linha_aviso_antiga(job)}"
         f"<b>Relevância:</b> {_linha_relevancia(job.relevancia)}\n"
-        f"<b>Motivo:</b> {job.motivo}\n"
-        f"<b>Empresa:</b> {job.empresa}\n"
-        f"<b>Cargo:</b> {job.titulo}\n"
-        f"<b>Nível:</b> {job.senioridade}\n"
-        f"<b>Local:</b> {job.local}\n"
+        f"<b>Motivo:</b> {html.escape(str(job.motivo))}\n"
+        f"<b>Empresa:</b> {html.escape(str(job.empresa))}\n"
+        f"<b>Cargo:</b> {html.escape(str(job.titulo))}\n"
+        f"<b>Nível:</b> {html.escape(str(job.senioridade))}\n"
+        f"<b>Local:</b> {html.escape(str(job.local))}\n"
         f"{linha_modalidade}"
         f"{linha_contrato}"
         f"{linha_salario}"
-        f"<b>Site:</b> {job.site}\n"
+        f"<b>Site:</b> {html.escape(str(job.site))}\n"
         f"{linha_publicacao}"
         f"{linha_tags}"
-        f"<b>Link:</b>\n{job.link}"
+        f"<b>Link:</b>\n{html.escape(str(job.link))}"
     )
     return enviar_mensagem(texto, reply_markup=_teclado_feedback(job.id))
 
 
 def notificar_vaga_exploratoria(job) -> bool:
-    linha_modalidade = f"<b>Modalidade:</b> {job.modalidade}\n" if job.modalidade else ""
-    linha_contrato = f"<b>📋 Contrato:</b> {job.tipo_contrato}\n" if getattr(job, "tipo_contrato", "") else "<b>📋 Contrato:</b> Não especificado\n"
-    linha_salario = f"<b>💰 Remuneração:</b> {job.salario}\n" if getattr(job, "salario", "") else "<b>💰 Remuneração:</b> Não informada\n"
+    linha_modalidade = f"<b>Modalidade:</b> {html.escape(str(job.modalidade))}\n" if job.modalidade else ""
+    linha_contrato = f"<b>📋 Contrato:</b> {html.escape(str(job.tipo_contrato))}\n" if getattr(job, "tipo_contrato", "") else "<b>📋 Contrato:</b> Não especificado\n"
+    linha_salario = f"<b>💰 Remuneração:</b> {html.escape(str(job.salario))}\n" if getattr(job, "salario", "") else "<b>💰 Remuneração:</b> Não informada\n"
     tags = _gerar_tags(job)
-    linha_tags = f"🏷️ <i>{tags}</i>\n\n" if tags else "\n"
+    linha_tags = f"🏷️ <i>{html.escape(tags)}</i>\n\n" if tags else "\n"
     texto = (
         f"🧭 <b>Vaga exploratória (Portugal/Espanha)</b>\n\n"
         f"{_linha_aviso_antiga(job)}"
         f"<b>Relevância:</b> {_linha_relevancia(job.relevancia)}\n"
-        f"<b>Motivo:</b> {job.motivo}\n"
-        f"<b>Empresa:</b> {job.empresa}\n"
-        f"<b>Cargo:</b> {job.titulo}\n"
-        f"<b>Nível:</b> {job.senioridade}\n"
-        f"<b>Local:</b> {job.local}\n"
+        f"<b>Motivo:</b> {html.escape(str(job.motivo))}\n"
+        f"<b>Empresa:</b> {html.escape(str(job.empresa))}\n"
+        f"<b>Cargo:</b> {html.escape(str(job.titulo))}\n"
+        f"<b>Nível:</b> {html.escape(str(job.senioridade))}\n"
+        f"<b>Local:</b> {html.escape(str(job.local))}\n"
         f"{linha_modalidade}"
         f"{linha_contrato}"
         f"{linha_salario}"
-        f"<b>Site:</b> {job.site}\n"
+        f"<b>Site:</b> {html.escape(str(job.site))}\n"
         f"{linha_tags}"
         f"Achada via busca por Portugal/Espanha — modalidade não confirmada "
         f"como remota, pode ser presencial ou híbrida. Confirma no link.\n\n"
-        f"<b>Link:</b>\n{job.link}"
+        f"<b>Link:</b>\n{html.escape(str(job.link))}"
     )
     return enviar_mensagem(texto, reply_markup=_teclado_feedback(job.id))
 
@@ -228,7 +229,7 @@ def montar_digest(vagas: list[tuple], rotulo_perfil: str) -> list[str]:
     vagas_top = vagas[:20]
     linhas = [
         f'{"🧭" if exploratoria else "•"} {_linha_relevancia(relevancia or 0)} '
-        f'<a href="{link}">{titulo}</a> — {empresa}'
+        f'<a href="{html.escape(str(link), quote=True)}">{html.escape(str(titulo))}</a> — {html.escape(str(empresa))}'
         for titulo, empresa, link, relevancia, exploratoria in vagas_top
     ]
 
