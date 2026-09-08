@@ -58,17 +58,11 @@ def enviar_mensagem(texto: str, reply_markup: dict | None = None) -> bool:
 
 
 def _linha_relevancia(pontos: int) -> str:
-    """Renderiza Job.relevancia (0-10, ver pontuar_relevancia em job.py) como
-    estrelas — 10 pontos vira 5 estrelas, arredondado (6/10 vira 3, não 2.5).
-    Não é filtro, só destaque visual pra priorizar leitura entre as vagas
-    aprovadas do ciclo (item 07 da auditoria: com ~320 vaga/dia, tudo
-    chegava com o mesmo destaque)."""
-    # (pontos + 1) // 2 em vez de round(pontos / 2): round() do Python
-    # arredonda .5 pro par mais próximo (5/10 vira 2 estrelas, 7/10 vira 4)
-    # — inconsistente e contraintuitivo pra quem só olha o emoji. Assim
-    # sempre arredonda .5 pra cima (5/10 = 3, 7/10 = 4, sempre igual).
-    cheias = (pontos + 1) // 2
-    return "⭐" * cheias + "☆" * (5 - cheias) + f" ({pontos}/10)"
+    """Renderiza Job.relevancia (0-12, ver pontuar_relevancia em job.py) como
+    estrelas — 12 pontos vira 5 estrelas. Não é filtro, só destaque visual pra
+    priorizar leitura entre as vagas aprovadas do ciclo."""
+    cheias = min(5, max(0, round(pontos * 5 / 12)))
+    return "⭐" * cheias + "☆" * (5 - cheias) + f" ({pontos}/12)"
 
 
 def _teclado_feedback(job_id: str) -> dict:
@@ -121,6 +115,16 @@ def _gerar_tags(job) -> str:
     elif "presencial" in mod_norm or "presencial" in local_norm:
         tags.append("#Presencial")
 
+    if getattr(job, "e_prestacao_servico", False):
+        if "freelance" in (getattr(job, "tipo_contrato", "") or "").lower():
+            tags.append("#Freelance")
+        elif "pj" in (getattr(job, "tipo_contrato", "") or "").lower():
+            tags.append("#PJ")
+        else:
+            tags.append("#Contractor")
+    elif (getattr(job, "tipo_contrato", "") or "").lower() == "clt":
+        tags.append("#CLT")
+
     tech_map = [
         ("embedded", "#Embedded"),
         ("embarcado", "#Embarcados"),
@@ -163,6 +167,8 @@ def _gerar_tags(job) -> str:
 def notificar_vaga(job) -> bool:
     linha_publicacao = f"<b>Publicada:</b> {job.publicado_em}\n" if job.publicado_em else ""
     linha_modalidade = f"<b>Modalidade:</b> {job.modalidade}\n" if job.modalidade else ""
+    linha_contrato = f"<b>📋 Contrato:</b> {job.tipo_contrato}\n" if getattr(job, "tipo_contrato", "") else "<b>📋 Contrato:</b> Não especificado\n"
+    linha_salario = f"<b>💰 Remuneração:</b> {job.salario}\n" if getattr(job, "salario", "") else "<b>💰 Remuneração:</b> Não informada\n"
     tags = _gerar_tags(job)
     linha_tags = f"🏷️ <i>{tags}</i>\n\n" if tags else "\n"
     texto = (
@@ -175,6 +181,8 @@ def notificar_vaga(job) -> bool:
         f"<b>Nível:</b> {job.senioridade}\n"
         f"<b>Local:</b> {job.local}\n"
         f"{linha_modalidade}"
+        f"{linha_contrato}"
+        f"{linha_salario}"
         f"<b>Site:</b> {job.site}\n"
         f"{linha_publicacao}"
         f"{linha_tags}"
@@ -185,6 +193,8 @@ def notificar_vaga(job) -> bool:
 
 def notificar_vaga_exploratoria(job) -> bool:
     linha_modalidade = f"<b>Modalidade:</b> {job.modalidade}\n" if job.modalidade else ""
+    linha_contrato = f"<b>📋 Contrato:</b> {job.tipo_contrato}\n" if getattr(job, "tipo_contrato", "") else "<b>📋 Contrato:</b> Não especificado\n"
+    linha_salario = f"<b>💰 Remuneração:</b> {job.salario}\n" if getattr(job, "salario", "") else "<b>💰 Remuneração:</b> Não informada\n"
     tags = _gerar_tags(job)
     linha_tags = f"🏷️ <i>{tags}</i>\n\n" if tags else "\n"
     texto = (
@@ -197,6 +207,8 @@ def notificar_vaga_exploratoria(job) -> bool:
         f"<b>Nível:</b> {job.senioridade}\n"
         f"<b>Local:</b> {job.local}\n"
         f"{linha_modalidade}"
+        f"{linha_contrato}"
+        f"{linha_salario}"
         f"<b>Site:</b> {job.site}\n"
         f"{linha_tags}"
         f"Achada via busca por Portugal/Espanha — modalidade não confirmada "

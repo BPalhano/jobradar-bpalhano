@@ -241,6 +241,9 @@ def ciclo_de_busca(perfil: Perfil):
     # auto-contido (cria e fecha seu(s) próprio(s) browser(s) Playwright
     # dentro de buscar_vagas()), então dá pra rodar vários ao mesmo tempo em
     # threads sem risco — nenhum compartilha Browser/Page com outro.
+    vistos_no_ciclo_ids: set[str] = set()
+    vistos_no_ciclo_chaves: set[str] = set()
+
     with ThreadPoolExecutor(max_workers=perfil.max_scrapers_concorrentes) as executor:
         futures = {executor.submit(scraper.buscar_vagas): scraper for scraper in scrapers}
 
@@ -283,8 +286,21 @@ def ciclo_de_busca(perfil: Perfil):
 
             novas_da_fonte = 0
             for vaga in vagas_filtradas:
-                if ja_vista(vaga):
+                empresa_norm = _normalizar(vaga.empresa or "")
+                empresa_valida = empresa_norm not in ("", "nao informado", "confidencial", "empresa confidencial")
+                if vaga.id in vistos_no_ciclo_ids:
                     continue
+                if empresa_valida and vaga.chave_secundaria in vistos_no_ciclo_chaves:
+                    continue
+                if ja_vista(vaga):
+                    vistos_no_ciclo_ids.add(vaga.id)
+                    if empresa_valida:
+                        vistos_no_ciclo_chaves.add(vaga.chave_secundaria)
+                    continue
+
+                vistos_no_ciclo_ids.add(vaga.id)
+                if empresa_valida:
+                    vistos_no_ciclo_chaves.add(vaga.chave_secundaria)
 
                 # Item 08: só notifica na hora quando a relevância passa do
                 # limiar (ver LIMIAR_DIGEST_IMEDIATO em config.py) — abaixo
@@ -318,7 +334,7 @@ def ciclo_de_busca(perfil: Perfil):
                     logger.info(f"[{perfil.nome}] Nova vaga: {vaga.titulo} - {vaga.empresa}")
                 else:
                     salvar_vaga(vaga, perfil_chave=perfil.chave, digest_pendente=True)
-                    motivo_digest = "vaga antiga" if vaga.publicacao_antiga else f"relevância {vaga.relevancia}/10"
+                    motivo_digest = "vaga antiga" if vaga.publicacao_antiga else f"relevância {vaga.relevancia}/12"
                     logger.info(
                         f"[{perfil.nome}] Nova vaga (digest, {motivo_digest}): "
                         f"{vaga.titulo} - {vaga.empresa}"
@@ -328,8 +344,21 @@ def ciclo_de_busca(perfil: Perfil):
                 novas_da_fonte += 1
 
             for vaga in vagas_secundarias:
-                if ja_vista(vaga):
+                empresa_norm = _normalizar(vaga.empresa or "")
+                empresa_valida = empresa_norm not in ("", "nao informado", "confidencial", "empresa confidencial")
+                if vaga.id in vistos_no_ciclo_ids:
                     continue
+                if empresa_valida and vaga.chave_secundaria in vistos_no_ciclo_chaves:
+                    continue
+                if ja_vista(vaga):
+                    vistos_no_ciclo_ids.add(vaga.id)
+                    if empresa_valida:
+                        vistos_no_ciclo_chaves.add(vaga.chave_secundaria)
+                    continue
+
+                vistos_no_ciclo_ids.add(vaga.id)
+                if empresa_valida:
+                    vistos_no_ciclo_chaves.add(vaga.chave_secundaria)
 
                 if vaga.relevancia < 5:
                     continue
@@ -349,7 +378,7 @@ def ciclo_de_busca(perfil: Perfil):
                     )
                 else:
                     salvar_vaga(vaga, perfil_chave=perfil.chave, digest_pendente=True, exploratoria=True)
-                    motivo_digest = "vaga antiga" if vaga.publicacao_antiga else f"relevância {vaga.relevancia}/10"
+                    motivo_digest = "vaga antiga" if vaga.publicacao_antiga else f"relevância {vaga.relevancia}/12"
                     logger.info(
                         f"[{perfil.nome}] Nova vaga exploratória (digest, {motivo_digest}): "
                         f"{vaga.titulo} - {vaga.empresa}"

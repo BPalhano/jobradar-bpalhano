@@ -73,6 +73,18 @@ def _garantir_coluna_modalidade(conn):
         conn.execute("ALTER TABLE vagas_vistas ADD COLUMN modalidade TEXT")
 
 
+def _garantir_coluna_salario(conn):
+    colunas = [linha[1] for linha in conn.execute("PRAGMA table_info(vagas_vistas)")]
+    if "salario" not in colunas:
+        conn.execute("ALTER TABLE vagas_vistas ADD COLUMN salario TEXT")
+
+
+def _garantir_coluna_tipo_contrato(conn):
+    colunas = [linha[1] for linha in conn.execute("PRAGMA table_info(vagas_vistas)")]
+    if "tipo_contrato" not in colunas:
+        conn.execute("ALTER TABLE vagas_vistas ADD COLUMN tipo_contrato TEXT")
+
+
 def _garantir_colunas_digest(conn):
     """Migração leve pro digest ranqueado (ver main.py/_enviar_digest_diario
     e notifier/telegram.py/montar_digest): vaga com relevancia abaixo do
@@ -165,6 +177,8 @@ def iniciar_db():
         _garantir_coluna_chave_secundaria(conn)
         _garantir_coluna_publicado_em(conn)
         _garantir_coluna_modalidade(conn)
+        _garantir_coluna_salario(conn)
+        _garantir_coluna_tipo_contrato(conn)
         _garantir_colunas_digest(conn)
         _garantir_coluna_situacao(conn)
         _garantir_coluna_feedback(conn)
@@ -212,10 +226,18 @@ def ja_vista(job) -> bool:
     diferentes, com URL diferente em cada uma — ver Job.chave_secundaria).
     """
     with _conectar() as conn:
-        cursor = conn.execute(
-            "SELECT 1 FROM vagas_vistas WHERE id = ? OR chave_secundaria = ? LIMIT 1",
-            (job.id, job.chave_secundaria),
-        )
+        empresa_norm = _normalizar(job.empresa or "")
+        empresa_valida = empresa_norm not in ("", "nao informado", "confidencial", "empresa confidencial")
+        if empresa_valida:
+            cursor = conn.execute(
+                "SELECT 1 FROM vagas_vistas WHERE id = ? OR chave_secundaria = ? LIMIT 1",
+                (job.id, job.chave_secundaria),
+            )
+        else:
+            cursor = conn.execute(
+                "SELECT 1 FROM vagas_vistas WHERE id = ? LIMIT 1",
+                (job.id,),
+            )
         return cursor.fetchone() is not None
 
 
@@ -248,13 +270,14 @@ def salvar_vaga(job, perfil_chave: str = "", digest_pendente: bool = False, expl
             """
             INSERT OR IGNORE INTO vagas_vistas
                 (id, titulo, empresa, local, link, site, chave_secundaria, publicado_em,
-                 modalidade, relevancia, perfil, digest_pendente, exploratoria, situacao)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 modalidade, salario, tipo_contrato, relevancia, perfil, digest_pendente, exploratoria, situacao)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 job.id, job.titulo, job.empresa, job.local, job.link, job.site,
-                job.chave_secundaria, job.publicado_em, job.modalidade,
-                job.relevancia, perfil_chave, int(digest_pendente), int(exploratoria), "nova",
+                job.chave_secundaria, job.publicado_em, job.modalidade, job.salario,
+                job.tipo_contrato, job.relevancia, perfil_chave, int(digest_pendente),
+                int(exploratoria), "nova",
             ),
         )
 

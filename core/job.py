@@ -867,6 +867,46 @@ def _detectar_senioridade(titulo: str) -> str:
     return "Não especificado"
 
 
+_PADROES_SALARIO = [
+    re.compile(r"(?:Menos de|Mais de|Ate|Até|Up to)\s+(?:USD|EUR|GBP|CAD|BRL|R\$|\$|€|£)\s*\d+[\d.,]*(?:\s*(?:k|mil))?", re.IGNORECASE),
+    re.compile(r"(?:USD|EUR|GBP|CAD|BRL|R\$|\$|€|£)\s*\d+[\d.,]*(?:\s*(?:k|mil))?(?:\s*(?:-|a|to|–)\s*(?:USD|EUR|GBP|CAD|BRL|R\$|\$|€|£)?\s*\d+[\d.,]*(?:\s*(?:k|mil))?)?(?:\s*(?:\/|\s*por\s*|\s*a\s*|\s*an\s*|\s*per\s*)(?:ano|mês|mes|hora|hr|dia|year|yr|month|mo|hour|h|day))?", re.IGNORECASE),
+    re.compile(r"\b\d+[\d.,]*\s*(?:k|K)\s*(?:USD|EUR|GBP|CAD|BRL|reais|euros|dólares|dolares)?\s*(?:\/\s*(?:ano|year|yr|mês|mes|mo|dia|hora|h))?\b", re.IGNORECASE),
+]
+
+
+def extrair_salario(texto: str) -> str:
+    """Extrai valor ou faixa salarial de um texto de vaga se mencionado."""
+    for padrao in _PADROES_SALARIO:
+        m = padrao.search(texto)
+        if m:
+            val = m.group(0).strip()
+            if any(c.isdigit() for c in val):
+                return val
+    return ""
+
+
+_PADROES_CONTRATO = [
+    (re.compile(r"\b(?:presta[cç](?:ao|ão)\s+de\s+servi[cç]os?|prestador\s+de\s+servi[cç]os?)\b", re.IGNORECASE), "Prestação de Serviços"),
+    (re.compile(r"\b(?:freelance|freelancer)\b", re.IGNORECASE), "Freelance"),
+    (re.compile(r"\b(?:contractor|contract\s+basis|contract\s+to\s+hire|on\s+contract)\b", re.IGNORECASE), "Contractor"),
+    (re.compile(r"\b(?:pj|pessoa\s+jur[ií]dica|b2b)\b", re.IGNORECASE), "PJ / B2B"),
+    (re.compile(r"\b(?:clt|efetivo)\b", re.IGNORECASE), "CLT"),
+    (re.compile(r"\b(?:part[\s-]time|meio\s+per[ií]odo)\b", re.IGNORECASE), "Part-time"),
+    (re.compile(r"\b(?:full[\s-]time|tempo\s+integral)\b", re.IGNORECASE), "Full-time"),
+    (re.compile(r"\b(?:est[aá]gio|internship|trainee)\b", re.IGNORECASE), "Estágio / Trainee"),
+    (re.compile(r"\b(?:contract|contrato)\b", re.IGNORECASE), "Contrato"),
+]
+
+
+def extrair_tipo_contrato(texto: str) -> str:
+    """Detecta menção explícita a tipo de contratação no texto."""
+    for padrao, rotulo in _PADROES_CONTRATO:
+        if padrao.search(texto):
+            return rotulo
+    return ""
+
+
+
 @dataclass
 class RegrasFiltro:
     """Agrupa as 6 regras que Job.combina_com() usa pra decidir se uma vaga
@@ -960,6 +1000,8 @@ _PESO_SENIORIDADE_ACIMA_DO_ALVO = -2
 _PESO_MERCADO = 2
 _PESO_MERCADO_NAO_CONFIRMADO = 1  # remota sem mercado declarado no texto (aceita por padrão, sem confirmar)
 _PESO_IDIOMA = 1
+_PESO_PRESTACAO_SERVICO = 1  # prestação de serviço / contractor / freelance / projeto
+_PESO_SALARIO_INFORMADO = 1  # valor ou faixa salarial descrita na vaga
 
 # Prioridade definida para o perfil: Estágio/Trainee e Júnior pontuam o teto de
 # senioridade (bônus). Pleno, Sênior, Especialista e Liderança pontuam negativo.
@@ -995,45 +1037,49 @@ class Job:
     # `local` só com informação de localização de verdade. Valores usados:
     # "Remoto", "Híbrido", "Presencial", ou "" quando a fonte não expõe.
     modalidade: str = ""
-    # MEDIDO: WeWorkRemotelyIntlScraper preenche `local` com a SEDE da
-    # empresa (".new-listing__company-headquarters"), não o mercado onde a
-    # vaga contrata — o site é 100% remoto por definição, sede não diz nada
-    # sobre de onde a empresa aceita candidato. Depois que
-    # extrair_escopo_remoto passou a usar `local` inteiro como escopo
-    # quando `modalidade` já confirma remoto (ver Job.escopo_remoto), uma
-    # vaga remota mundial de empresa sediada nos EUA passaria a ser barrada
-    # pelo endereço da sede, que nunca foi o mercado real da vaga. Esse
-    # flag existe pra distinguir os dois casos: `local` como mercado de
-    # contratação de verdade (LinkedIn/Indeed, onde o campo reflete a
-    # vaga) vs `local` como informação de sede (WeWorkRemotely, onde não
-    # reflete). Mantém `local` preenchido pra exibir na notificação — só
-    # tira ele da checagem de mercado.
+    salario: str = ""
+    tipo_contrato: str = ""
     escopo_indefinido: bool = False
-    # Score de pontuar_relevancia() (0-10), preenchido por filtrar_vagas()
-    # depois que a vaga passa combina_com() — 0 até lá (nunca usado sozinho
-    # pra decidir nada, só pra ORDENAR/destacar na notificação).
     relevancia: int = 0
-    # Texto de motivo_aprovacao() (ver método), preenchido junto de
-    # relevancia — "" até lá. Só pra aparecer na notificação; não
-    # influencia filtro nem score.
     motivo: str = ""
 
     def __post_init__(self):
         """Sobrepõe modalidade="Remoto" quando o TÍTULO contradiz (Híbrido/
         Presencial) — ver _modalidade_pelo_titulo.
-
-        MEDIDO: essa correção existia só dentro de linkedin.py/
-        linkedin_intl.py, aplicada manualmente na hora de montar o Job.
-        indeed_intl.py tinha o mesmo problema (modalidade="Remoto" cravada
-        direto quando o filtro nativo da URL está ligado, sem olhar o
-        título) e não usava a correção — vaga híbrida do Indeed com filtro
-        nativo passava como remota no perfil internacional. Import por
-        scraper depende de cada um lembrar de aplicar; aqui roda pra TODO
-        Job automaticamente, incluindo fonte futura que ainda nem existe.
+        Também detecta contrato e remuneração caso não tenham sido preenchidos na extração.
         """
         modalidade_real = _modalidade_pelo_titulo(self.titulo)
         if modalidade_real and self.modalidade == "Remoto":
             self.modalidade = modalidade_real
+
+        if not self.tipo_contrato:
+            if self.site.lower().startswith("workana"):
+                self.tipo_contrato = "Prestação de Serviços / Freelance"
+            else:
+                contrato_detectado = extrair_tipo_contrato(f"{self.titulo} {self.local}")
+                if contrato_detectado:
+                    self.tipo_contrato = contrato_detectado
+
+        if not self.salario:
+            salario_detectado = extrair_salario(self.titulo)
+            if salario_detectado:
+                self.salario = salario_detectado
+
+    @property
+    def e_prestacao_servico(self) -> bool:
+        """True se for prestação de serviço, contractor, freelance, PJ, B2B ou projeto
+        ("contratado pra resolver um problema e ir embora")."""
+        if self.site.lower().startswith("workana"):
+            return True
+        texto = f"{self.tipo_contrato} {self.titulo}".lower()
+        texto_norm = _normalizar(texto)
+        termos = [
+            "contractor", "contract", "contrato", "prestacao de servico",
+            "prestador", "freelance", "freelancer", "pj", "b2b",
+            "projeto", "project", "hourly", "fixed price", "fixed-price",
+            "short term", "short-term", "consultor", "consultant",
+        ]
+        return any(_contem_termo(t, texto_norm) for t in termos)
 
     @property
     def id(self) -> str:
@@ -1332,34 +1378,18 @@ class Job:
             pontos_mercado = _PESO_MERCADO_NAO_CONFIRMADO
 
         pontos_idioma = _PESO_IDIOMA if av.idioma_bateu_titulo else 0
+        pontos_prestacao = _PESO_PRESTACAO_SERVICO if self.e_prestacao_servico else 0
+        pontos_salario = _PESO_SALARIO_INFORMADO if bool(self.salario and self.salario.strip()) else 0
 
         return (
             pontos_cargo + pontos_ferramenta + pontos_senioridade
             + pontos_mercado + pontos_idioma
+            + pontos_prestacao + pontos_salario
         )
 
     def motivo_aprovacao(self, regras: RegrasFiltro) -> str:
         """Qual sinal aprovou a vaga — só pra aparecer na notificação, não
-        influencia combina_com() nem pontuar_relevancia(). MEDIDO: a
-        mensagem nunca dizia qual regra bateu; via o resultado (vaga
-        chegou), nunca a causa (por que ela passou) — sem isso não dá pra
-        perceber, olhando as notificações, que uma keyword_ambiguo ou uma
-        ferramenta específica está trazendo lixo (teria que ir direto no
-        código/log pra descobrir).
-
-        Sinal de cargo (sempre um dos três — bate_keyword exige pelo menos
-        um pra aprovar), mesma prioridade de pontuar_relevancia:
-        - "Cargo forte": bateu keyword inequívoca de dados/BI.
-        - "Cargo ambíguo + qualificador": cargo genérico (ex: "Business
-          Analyst") só aprovado por causa do qualificador junto.
-        - "Ferramenta + cargo": aprovou por ferramenta no título (ex:
-          "Power BI"), não por palavra de cargo.
-
-        Mais " · idioma sem mercado" quando a vaga é remota, o texto não
-        declarou mercado nenhum, e só passou no gate de geografia porque o
-        idioma apareceu no título — o caminho mais frágil dos três (ver
-        MEDIDO no item 03: foi exatamente esse caminho que deixava passar
-        vaga sem relação nenhuma com o mercado antes da correção)."""
+        influencia combina_com() nem pontuar_relevancia()."""
         av = self._avaliar(regras)
         if av.bate_forte:
             motivo = "Cargo forte"
@@ -1369,6 +1399,10 @@ class Job:
             motivo = "Ferramenta + cargo"
         if av.bate_remoto and not av.escopos and av.idioma_bateu_titulo:
             motivo += " · idioma sem mercado"
+        if self.e_prestacao_servico:
+            motivo += " · Prestação de Serviços"
+        if self.salario and self.salario.strip():
+            motivo += " · Remuneração informada"
         return motivo
 
     def escopo_rejeitado_por_mercado(self, regras: RegrasFiltro) -> set[str] | None:

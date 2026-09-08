@@ -59,6 +59,7 @@ from scrapers.linkedin import LinkedInScraper
 from scrapers.linkedin_intl import LinkedInIntlScraper
 from scrapers.solides import SolidesScraper
 from scrapers.weworkremotely_intl import WeWorkRemotelyIntlScraper
+from scrapers.workana import WorkanaScraper
 
 # "alta" roda TODO ciclo; "baixa" roda só na primeira execução de cada dia
 # (ver _fontes_baixa_frequencia_ja_rodaram_hoje em main.py). Existe pra
@@ -161,6 +162,7 @@ _SCRAPERS_BR = [
     DefinicaoScraper(GupyScraper, FREQUENCIA_ALTA),        # ~2,6% de rendimento
     DefinicaoScraper(LinkedInScraper, FREQUENCIA_ALTA),     # ~8,5% — a melhor fonte de longe
     DefinicaoScraper(GlassdoorScraper, FREQUENCIA_ALTA),    # Nova fonte com alto volume de vagas
+    DefinicaoScraper(WorkanaScraper, FREQUENCIA_ALTA),      # Projetos, freelance e prestação de serviço
     DefinicaoScraper(SolidesScraper, FREQUENCIA_ALTA),      # ~1,1%
     DefinicaoScraper(IndeedScraper, FREQUENCIA_ALTA),       # ~1,1%
     DefinicaoScraper(GeekHunterScraper, FREQUENCIA_BAIXA),  # <1%
@@ -221,6 +223,7 @@ _SCRAPERS_INTL = [
     DefinicaoScraper(LinkedInIntlScraper, FREQUENCIA_ALTA, {"locations": LOCATIONS_INTL}),
     DefinicaoScraper(IndeedIntlScraper, FREQUENCIA_ALTA, {"dominios": DOMINIOS_INDEED_INTL}),
     DefinicaoScraper(WeWorkRemotelyIntlScraper, FREQUENCIA_ALTA),
+    DefinicaoScraper(WorkanaScraper, FREQUENCIA_ALTA),
 ]
 
 PERFIL_INTL = Perfil(

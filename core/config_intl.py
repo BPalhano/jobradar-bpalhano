@@ -133,10 +133,18 @@ QUALIFICADORES_CARGO_INTL = [
     "programmer",
     "specialist",
     "contractor",
+    "consultant",
+    "architect",
     "intern",
     "junior",
     "mid",
     "lead",
+    "freelance",
+    "freelancer",
+    "development",
+    "project",
+    "firmware",
+    "embedded",
 ]
 
 # Termos de consulta para varredura internacional no LinkedIn e agregadores
