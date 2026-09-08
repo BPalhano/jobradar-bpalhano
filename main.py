@@ -25,6 +25,7 @@ from notifier.telegram import (
     processar_feedback_pendente,
 )
 from core.perfis import FREQUENCIA_ALTA, PERFIS, Perfil
+from core.job import _normalizar
 from utils.filtro import filtrar_vagas
 from core.logger import get_logger
 
@@ -428,14 +429,16 @@ def ciclo_de_busca(perfil: Perfil):
 
     _enviar_heartbeat_diario(perfil, total_novas, scrapers_com_problema, len(scrapers))
     _enviar_digest_diario(perfil)
+    return total_novas
 
 
-def _rodar_um_ciclo_de_cada(perfis: list[Perfil]):
+def _rodar_um_ciclo_de_cada(perfis: list[Perfil]) -> int:
     # Uma vez por execução, não por perfil: o offset do getUpdates (ver
     # processar_feedback_pendente) é global — feedback de vaga não tem
     # perfil, e rodar duas vezes na mesma execução só gastaria uma chamada
     # de API à toa (a segunda sempre veria "nada novo desde a última vez").
     processar_feedback_pendente()
+    total_geral_novas = 0
 
     for perfil in perfis:
         print(f"\n{'=' * 50}")
@@ -451,7 +454,10 @@ def _rodar_um_ciclo_de_cada(perfis: list[Perfil]):
             for pais in perfil.paises_pesquisados:
                 print(f"• {pais}")
 
-        ciclo_de_busca(perfil)
+        novas = ciclo_de_busca(perfil)
+        total_geral_novas += (novas or 0)
+
+    return total_geral_novas
 
 
 def main():
@@ -472,6 +478,11 @@ def main():
         help="Roda um único ciclo de busca (de cada perfil selecionado) e encerra "
              "(usado no GitHub Actions, que já dispara o script periodicamente via cron).",
     )
+    parser.add_argument(
+        "--avisar-ciclo",
+        action="store_true",
+        help="Envia mensagem no Telegram de início e encerramento da varredura deste ciclo.",
+    )
     args = parser.parse_args()
 
     perfis_selecionados = [PERFIS[chave] for chave in args.perfil]
@@ -480,12 +491,6 @@ def main():
         print(f"\nIntervalo de checagem: {INTERVALO_MINUTOS} min\n")
 
     # Chamado UMA VEZ só, antes de qualquer perfil rodar — não por perfil.
-    # A checagem de "banco suspeito" (ver database.py) compara se o arquivo
-    # já existia ANTES desta execução; se cada perfil chamasse iniciar_db()
-    # separadamente na mesma execução, o segundo perfil veria o arquivo que
-    # o primeiro acabou de criar/popular momentos atrás e podia disparar
-    # falso positivo (arquivo "já existia" só porque o perfil anterior já
-    # rodou nesta mesma execução, não porque é run antigo de verdade).
     try:
         iniciar_db()
     except BancoVazioSuspeito as e:
@@ -495,7 +500,23 @@ def main():
         sys.exit(1)
 
     if args.once:
-        _rodar_um_ciclo_de_cada(perfis_selecionados)
+        if args.avisar_ciclo:
+            enviar_mensagem(
+                "🔎 <b>JobRadar:</b> Iniciando varredura de vagas...\n"
+                "Varrendo fontes de Sistemas Embarcados, Firmware, C++, Telecom e Edge AI."
+            )
+        total_novas = _rodar_um_ciclo_de_cada(perfis_selecionados)
+        if args.avisar_ciclo:
+            if total_novas > 0:
+                enviar_mensagem(
+                    f"🏁 <b>JobRadar:</b> Varredura concluída. <b>{total_novas}</b> nova(s) vaga(s) encontrada(s).\n"
+                    "Processo finalizado, memória liberada. Próxima checagem em 3h."
+                )
+            else:
+                enviar_mensagem(
+                    "🏁 <b>JobRadar:</b> Varredura concluída. Nenhuma nova vaga neste ciclo.\n"
+                    "Processo finalizado, memória liberada. Próxima checagem em 3h."
+                )
         return
 
     enviar_mensagem(
