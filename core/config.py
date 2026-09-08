@@ -320,8 +320,8 @@ MERCADOS_REMOTO_ACEITOS = ["Brasil"]
 INTERVALO_MINUTOS = int(os.getenv("INTERVALO_MINUTOS", 180))
 
 # Digest ranqueado: vaga com Job.pontuar_relevancia() >= este
-# limiar notifica na hora (score 7, 8, 9, 10); abaixo disso, vai pro digest diário.
-LIMIAR_DIGEST_IMEDIATO = 7
+# limiar notifica na hora (score 6, 7, 8, 9, 10); abaixo disso, vai pro digest diário.
+LIMIAR_DIGEST_IMEDIATO = int(os.getenv("LIMIAR_DIGEST_IMEDIATO", 6))
 
 # Hora UTC a partir da qual o digest diário pode sair (uma vez por perfil,
 # por dia — ver _enviar_digest_diario em main.py). A regra é "ainda não

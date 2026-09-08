@@ -304,10 +304,6 @@ def ciclo_de_busca(perfil: Perfil):
                 # sem volume novo suficiente a antiga não sai da 1ª página).
                 # Não é descartada (mesma vaga ainda pode estar aberta) — só
                 # sai do caminho "🚨 urgente" e vai pro digest em lote.
-                # Regra: Vagas internacionais só são aceitas/notificadas se tiverem relevância mínima 8/10
-                if perfil.chave == "internacional" and vaga.relevancia < 8:
-                    continue
-
                 if vaga.relevancia < 5:
                     continue
 
@@ -333,9 +329,6 @@ def ciclo_de_busca(perfil: Perfil):
 
             for vaga in vagas_secundarias:
                 if ja_vista(vaga):
-                    continue
-
-                if perfil.chave == "internacional" and vaga.relevancia < 8:
                     continue
 
                 if vaga.relevancia < 5:
@@ -475,6 +468,12 @@ def main():
     if args.once:
         _rodar_um_ciclo_de_cada(perfis_selecionados)
         return
+
+    enviar_mensagem(
+        "⚡ <b>JobRadar iniciado!</b>\n\n"
+        "O computador ligou e o serviço foi iniciado automaticamente. "
+        "Realizando leitura e ranqueamento das vagas de Sistemas Embarcados, Firmware, C++, Telecom e Edge AI..."
+    )
 
     while True:
         _rodar_um_ciclo_de_cada(perfis_selecionados)
