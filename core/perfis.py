@@ -35,6 +35,10 @@ from core.config import (
 )
 from core.config_intl import (
     KEYWORDS_INTL,
+    KEYWORDS_INTL_AMBIGUO,
+    QUALIFICADORES_INTL,
+    FERRAMENTAS_INTL_TITULO,
+    QUALIFICADORES_CARGO_INTL,
     TERMOS_BUSCA_INTL,
     TERMOS_POR_CICLO_INTL,
     LOCATIONS_INTL,
@@ -54,6 +58,7 @@ from scrapers.jobs99 import Jobs99Scraper
 from scrapers.linkedin import LinkedInScraper
 from scrapers.linkedin_intl import LinkedInIntlScraper
 from scrapers.solides import SolidesScraper
+from scrapers.weworkremotely_intl import WeWorkRemotelyIntlScraper
 
 # "alta" roda TODO ciclo; "baixa" roda só na primeira execução de cada dia
 # (ver _fontes_baixa_frequencia_ja_rodaram_hoje em main.py). Existe pra
@@ -188,10 +193,10 @@ PERFIL_BR = Perfil(
 # vaga em si.
 _REGRAS_INTL = RegrasFiltro(
     keywords_forte=KEYWORDS_INTL,
-    keywords_ambiguo=[],
-    qualificadores_dados=[],
-    ferramentas_titulo=[],
-    qualificadores_cargo=[],
+    keywords_ambiguo=KEYWORDS_INTL_AMBIGUO,
+    qualificadores_dados=QUALIFICADORES_INTL,
+    ferramentas_titulo=FERRAMENTAS_INTL_TITULO,
+    qualificadores_cargo=QUALIFICADORES_CARGO_INTL,
     cidades=CIDADES_INTL,
     mercados_remoto_aceitos=MERCADOS_REMOTO_ACEITOS_INTL,
     idiomas_exigidos=IDIOMAS_EXIGIDOS_INTL,
@@ -203,10 +208,10 @@ _REGRAS_INTL = RegrasFiltro(
 # remoto) rejeitaria. DESLIGADO — mesmo motivo do eixo BR acima.
 _REGRAS_INTL_IBERIA = RegrasFiltro(
     keywords_forte=KEYWORDS_INTL,
-    keywords_ambiguo=[],
-    qualificadores_dados=[],
-    ferramentas_titulo=[],
-    qualificadores_cargo=[],
+    keywords_ambiguo=KEYWORDS_INTL_AMBIGUO,
+    qualificadores_dados=QUALIFICADORES_INTL,
+    ferramentas_titulo=FERRAMENTAS_INTL_TITULO,
+    qualificadores_cargo=QUALIFICADORES_CARGO_INTL,
     cidades=CIDADES_EUROPA_IBERICA,
     palavras_exclusao=PALAVRAS_EXCLUSAO,
 )
@@ -215,6 +220,7 @@ _REGRAS_INTL_IBERIA = RegrasFiltro(
 _SCRAPERS_INTL = [
     DefinicaoScraper(LinkedInIntlScraper, FREQUENCIA_ALTA, {"locations": LOCATIONS_INTL}),
     DefinicaoScraper(IndeedIntlScraper, FREQUENCIA_ALTA, {"dominios": DOMINIOS_INDEED_INTL}),
+    DefinicaoScraper(WeWorkRemotelyIntlScraper, FREQUENCIA_ALTA),
 ]
 
 PERFIL_INTL = Perfil(

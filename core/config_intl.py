@@ -1,277 +1,227 @@
 
-# Config do programa internacional (busca vaga remota fora do Brasil que
-# aceita/pede português ou espanhol). Separado do config.py de propósito —
-# ver decisão registrada na conversa: misturar ia forçar o filtro de cidade
-# do Nordeste e as keywords em português do JobRadar original a servir dois
-# propósitos diferentes ao mesmo tempo, deixando os dois mais frágeis.
+# Configuração do programa internacional do JobRadar calibrada para o perfil
+# de Igor Braga Palhano (Engenharia de Sistemas Embarcados e Telecomunicações).
 #
-# Credenciais do Telegram e caminho do banco são os MESMOS do projeto
-# principal (reaproveita o bot já configurado, e o dedup por link no mesmo
-# jobs.db não tem risco de colisão — o id é hash do link, e vaga
-# internacional nunca vai ter o mesmo link de uma vaga brasileira).
+# Foco: Oportunidades 100% remotas pagando em moeda forte (USD, EUR, GBP, CAD, etc.),
+# em regime de contratação direta, prestação de serviços (Contractor, B2B, PJ Internacional)
+# ou contratação global.
+
 from core.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, DB_PATH, CIDADES_EUROPA_IBERICA  # noqa: F401
 
-# Cargo em múltiplos idiomas — vaga internacional pode ter o anúncio escrito
-# em inglês, português ou espanhol, dependendo de quem contratou.
+# Cargos Fortes Internacionais: títulos em inglês e francês que confirmam
+# diretamente o alinhamento com Sistemas Embarcados, Firmware, C/C++, DSP,
+# Telecomunicações e IA Embarcada.
 KEYWORDS_INTL = [
-    "Data Analyst",
-    "Business Intelligence",
-    "BI Analyst",
-    "Data Analytics",
-    "Data Specialist",
-    "Analista de Dados",
-    "Business Analyst",
-    # Nomenclatura em espanhol
-    "Analista de Datos",
-    "Analítica de Datos",
-    "Analista de Inteligencia de Negocios",
-    "Especialista en Datos",
-    "Analista de Business Intelligence",
-    "Analista de Reportes",
-    # Eixo separado: Data Annotation / AI Evaluator — não é análise de
-    # dados, é rotular/avaliar dado pra treinar IA, mas é um nicho remoto
-    # que contrata muito por idioma (PT-BR/ES) e paga em dólar, então entra
-    # como categoria própria de cargo, não mistura com as de análise.
-    "Data Annotator",
-    "Data Annotation",
-    "AI Evaluator",
-    "AI Trainer",
-    "Data Labeler",
-    "Search Quality Rater",
+    # Sistemas Embarcados & Firmware
+    "Embedded Systems Engineer",
+    "Embedded Software Engineer",
+    "Embedded Software Developer",
+    "Firmware Engineer",
+    "Firmware Developer",
+    "Embedded Firmware Engineer",
+    "Embedded Engineer",
+    "Embedded C Engineer",
+    "Embedded C++ Engineer",
+    "Embedded C++ Developer",
+    "Embedded Linux Engineer",
+    "Embedded Linux Developer",
+    "RTOS Software Engineer",
+    "IoT Software Engineer",
+    "IoT Firmware Engineer",
+    "IoT Engineer",
+    # C++ & Software Core
+    "C++ Software Engineer",
+    "C++ Developer",
+    "C++ Engineer",
+    "C/C++ Software Engineer",
+    "C/C++ Developer",
+    # Telecomunicações, Wireless & Processamento de Sinais (DSP)
+    "DSP Engineer",
+    "Signal Processing Engineer",
+    "Digital Signal Processing Engineer",
+    "Wireless Systems Engineer",
+    "Wireless Communications Engineer",
+    "Wireless Engineer",
+    "RF Software Engineer",
+    "Telecommunications Engineer",
+    "Telecom Engineer",
+    "5G Systems Engineer",
+    "6G Research Engineer",
+    # Edge AI, Computer Vision & Machine Learning
+    "Edge AI Engineer",
+    "Embedded AI Engineer",
+    "TinyML Engineer",
+    "Computer Vision Engineer",
+    # Nomenclatura em Francês (Mercado França, Suíça, Bélgica, Canadá)
+    "Ingénieur Systèmes Embarqués",
+    "Ingénieur Logiciel Embarqué",
+    "Ingénieur Firmware",
+    "Ingénieur Développement C++",
+    "Ingénieur Traitement du Signal",
+    "Ingénieur Télécoms",
+    "Ingénieur Télécommunication",
+    "Ingénieur Vision par Ordinateur",
+    "Ingénieur IA Embarquée",
 ]
 
-# Termos de busca: cargo + sinal de idioma (português/espanhol/bilíngue) ou
-# +sinal de mercado (LATAM, Spanish Market). Não faz sentido buscar só
-# "data analyst" sozinho aqui — isso é o mundo inteiro sem filtro nenhum de
-# idioma, a maioria fora do nosso alcance.
+# Cargos Ambíguos no cenário internacional (exigem qualificador de tecnologia)
+KEYWORDS_INTL_AMBIGUO = [
+    "Software Engineer",
+    "Systems Engineer",
+    "Research Engineer",
+    "Algorithm Engineer",
+    "Robotics Engineer",
+]
+
+# Qualificadores necessários quando o cargo for ambíguo
+QUALIFICADORES_INTL = [
+    "embedded",
+    "firmware",
+    "c++",
+    "dsp",
+    "wireless",
+    "telecom",
+    "5g",
+    "6g",
+    "rtos",
+    "freertos",
+    "microcontroller",
+    "stm32",
+    "esp32",
+    "arm",
+    "nxp",
+    "ble",
+    "bluetooth",
+    "iot",
+    "fpga",
+    "vhdl",
+    "edge ai",
+    "tinyml",
+    "computer vision",
+    "signal processing",
+    "traitement du signal",
+    "embarqué",
+    "embarque",
+]
+
+# Ferramentas no título da vaga
+FERRAMENTAS_INTL_TITULO = [
+    "C++",
+    "C/C++",
+    "FreeRTOS",
+    "RTOS",
+    "Embedded Linux",
+    "ESP32",
+    "STM32",
+    "ARM",
+    "DSP",
+    "SDR",
+    "GNU Radio",
+    "PyTorch",
+    "TinyML",
+    "Edge AI",
+    "Computer Vision",
+]
+
+QUALIFICADORES_CARGO_INTL = [
+    "engineer",
+    "developer",
+    "ingénieur",
+    "ingenieur",
+    "développeur",
+    "developpeur",
+    "programmer",
+    "specialist",
+    "contractor",
+    "intern",
+    "junior",
+    "mid",
+    "lead",
+]
+
+# Termos de consulta para varredura internacional no LinkedIn e agregadores
 TERMOS_BUSCA_INTL = [
-    "data analyst spanish speaker",
-    "data analyst spanish speaking",
-    "data analyst portuguese speaker",
-    "data analyst portuguese speaking",
-    "bilingual data analyst spanish",
-    "bilingual data analyst portuguese",
-    "business intelligence spanish speaker",
-    "business intelligence spanish speaking",
-    "business intelligence portuguese speaker",
-    "business intelligence portuguese speaking",
-    "remote data analyst latam",
-    "remote data analyst latin america",
-    "data analyst spanish market",
-    "business intelligence spanish markets",
-    "analista de datos remoto",
-    # MEDIDO ao vivo: vaga real ("Business Analyst (Colombia) - Remote",
-    # Connect Tech+Talent) aparece em location=Colombia&f_WT=2 pro termo
-    # bare "business analyst" — testei "spanish speaker", "business
-    # intelligence spanish speaker", "remote data analyst latin america" e
-    # "latam" contra a mesma vaga, location e filtro remoto: nenhum achou
-    # (o anúncio não repete nenhuma dessas frases). O comentário original
-    # lá em cima ("não faz sentido buscar só 'data analyst' sozinho, é o
-    # mundo inteiro sem idioma") não vale AQUI: todo termo desta lista já
-    # roda escopado por país (LOCATIONS_INTL) + remoto (f_WT=2) — nunca é
-    # busca global. E o filtro de idioma pós-busca (RegrasFiltro.
-    # idiomas_exigidos) só entra em jogo quando a vaga NÃO declara mercado
-    # nenhum no texto — quando o local já é um país aceito (ex: Colômbia),
-    # o PAÍS é o sinal, dispensa achar "spanish"/"portuguese" no título
-    # (mesma regra que já vale pro resto do filtro, ver job.py). Termo de
-    # cargo puro, escopado por país aceito, é seguro e fecha o vazamento:
-    # KEYWORDS_INTL aprova "Business Analyst"/"Data Analyst"/"Business
-    # Intelligence" como cargo forte, mas nenhum dos dois primeiros nunca
-    # era BUSCADO sozinho — só entravam por acidente, dentro de uma frase
-    # combinada.
-    "business analyst",
-    "data analyst",
-    "business intelligence",
-    # Eixo Data Annotation / AI Evaluator
-    "data annotation spanish speaker",
-    "data annotation portuguese speaker",
-    "ai evaluator spanish",
-    "ai evaluator portuguese",
-    "ai trainer portuguese speaker",
-    "ai trainer spanish speaker",
-    "remote data annotator latam",
-    # Termos "soltos" (idioma/mercado sem cargo emparelhado na própria
-    # busca) — diferente dos de cima, que sempre combinam cargo+idioma numa
-    # frase só. MEDIDO: zero ocorrência de "Spanish"/"Español"/"LATAM" como
-    # termo próprio no projeto — toda vaga que anuncia a vaga com o idioma
-    # em destaque ("Spanish Speaker — Data Analytics Role", "LATAM Remote
-    # Team") e não bate exatamente numa das frases combinadas acima ficava
-    # invisível pra busca. Não é o mesmo risco do comentário lá em cima
-    # (buscar só "data analyst" sozinho, sem NENHUM filtro de idioma) — aqui
-    # é o oposto, idioma sem cargo na busca, e o cargo continua sendo
-    # exigido depois por KEYWORDS_INTL antes de qualquer notificação.
-    "spanish speaker",
-    "spanish speaking",
-    "portuguese and spanish",
-    "spanish market",
-    "latam",
+    "embedded software engineer remote",
+    "firmware engineer remote",
+    "embedded systems engineer remote",
+    "c++ software engineer remote",
+    "c++ developer remote",
+    "dsp engineer remote",
+    "signal processing engineer remote",
+    "wireless engineer remote",
+    "edge ai engineer remote",
+    "computer vision engineer remote",
+    "embedded linux remote",
+    "iot firmware engineer remote",
+    "freertos remote",
+    "embedded c remote",
+    "telecommunications engineer remote",
+    "ingénieur systèmes embarqués télétravail",
+    "ingénieur logiciel embarqué remote",
 ]
 
-# MEDIDO: filtro de cargo (KEYWORDS_INTL) nunca checou idioma — a exigência
-# de espanhol/português vivia só nos TERMOS de busca acima, que casam
-# contra o anúncio inteiro (LinkedIn/Indeed indexam a descrição toda, não
-# só o título) e nunca são reconferidos depois. Resultado: "Senior Data
-# Analyst"/"Data Analyst" remoto e sem mercado declarado passava sem
-# nenhuma palavra em comum com espanhol/português/LATAM no que a gente
-# guarda (título/empresa/local). Usado em Job.combina_com() só quando a
-# vaga é remota SEM mercado aceito declarado (ver RegrasFiltro.idiomas_
-# exigidos e comentário lá) — quando o escopo já é um país hispanofalante/
-# lusófono aceito, o país é o sinal, essa lista nem entra em jogo.
-#
-# Mesmo vocabulário dos termos soltos acima (spanish/portuguese/latam),
-# mais a grafia em espanhol/português — busca casa com anúncio em inglês
-# na maioria das vezes, mas o TÍTULO que sobra pode vir em qualquer um dos
-# três idiomas.
-IDIOMAS_EXIGIDOS_INTL = [
-    "spanish",
-    "espanol",
-    "español",
-    "portuguese",
-    "português",
-    "portugues",
-    "latam",
-    "latin america",
-    "america latina",
-    "hispanohablante",
-    "lusofono",
-    "lusófono",
-]
+# Quantidade de termos buscados por ciclo de execução
+TERMOS_POR_CICLO_INTL = 8
 
-# Rodízio de termos, mesmo mecanismo do TERMOS_POR_CICLO em config.py (ver
-# _proximo_bloco_termos em main.py) — só que com chave de metadados própria
-# (sufixo "_internacional"), pra não colidir com o rodízio do perfil BR.
-# Esse perfil nunca tinha rodízio antes de virar perfil de verdade (rodava a
-# lista de termos INTEIRA todo ciclo, sem custo controlado, e nem chegava a
-# rodar de fato — não estava no workflow do GitHub Actions). 27 termos x até
-# 6 países/domínios por fonte já é bastante busca; bloco de 10 mantém o
-# custo por ciclo parecido com o do perfil BR.
-TERMOS_POR_CICLO_INTL = 10
-
-# Mercados pesquisados por rodada de busca no LinkedIn (parâmetro location
-# do endpoint). Lista enxuta de propósito — cada país aqui multiplica o
-# número de buscas (termos x países), então começa pequeno e dá pra
-# expandir depois que confirmar que vale o tempo de execução.
-#
-# "United States" e "United Kingdom" foram REMOVIDOS de propósito: mesmo com
-# os termos de busca pedindo "spanish/portuguese speaker", o location filtra
-# geografia, não idioma — a maioria das vagas retornadas pra EUA/Reino Unido
-# é vaga comum do mercado local, que pede inglês fluente (causa raiz do
-# problema relatado). O escopo agora é só América Latina + países ibéricos
-# que falam espanhol/português, que é o que esse pipeline sempre quis cobrir.
-#
-# "Latin America"/"LATAM"/"EMEA"/"Iberia" NÃO entraram aqui — testei ao
-# vivo no endpoint do LinkedIn e nenhum desses nomes de região resolve como
-# location de verdade (retorna resultado genérico, sem filtrar nada, ou
-# vazio). O endpoint só reconhece país/cidade específico. Por isso os
-# países de LATAM entraram nominalmente, e "latam"/"latin america" como
-# texto dentro do termo de busca (acima) em vez de location. "Iberia" não
-# precisa de entrada própria — já é coberto por Spain + Portugal abaixo.
+# Mercados / Países pesquisados no LinkedIn
 LOCATIONS_INTL = [
-    "Spain",
-    "Portugal",
-    "Mexico",
-    "Colombia",
-    "Argentina",
-    "Chile",
+    "United States",
+    "United Kingdom",
+    "Germany",
+    "France",
+    "Canada",
+    "Netherlands",
+    "Switzerland",
 ]
 
-# Sem cidade nenhuma — só remoto, de qualquer país. "Remote" cobre o termo
-# em inglês (a maioria dos cards vai estar em inglês), "Remoto" cobre os
-# poucos que vierem em português/espanhol.
-#
-# PROBLEMA que isso sozinho causava: CIDADES_INTL é uma whitelist — só
-# aceita "Remote"/"Remoto" no local. Isso rejeita vaga presencial/híbrida
-# em Lisboa ou Madrid mesmo quando ela é achada de propósito (via
-# LOCATIONS_INTL = Portugal/Spain), porque o local não escreve "Remote"
-# literalmente. Não é uma regra "excluir Portugal" — é a lógica de
-# whitelist só admitir o que está na lista, o que dá no mesmo na prática.
-#
-CIDADES_INTL = ["Remote", "Remoto"]
+# Modalidades de localização aceitas (100% Remoto em inglês, francês e português)
+CIDADES_INTL = ["Remote", "Remoto", "Télétravail", "Teletravail", "Home Office"]
 
-# Ver MERCADOS_REMOTO_ACEITOS em config.py e Job.escopo_remoto/
-# extrair_escopo_remoto em job.py. Duas listas com propósito DIFERENTE,
-# mesma lógica de TERMOS_BUSCA/TERMOS_POR_CICLO vs KEYWORDS: LOCATIONS_INTL
-# é ONDE BUSCAR (custo real — cada país multiplica busca × termo, então fica
-# enxuto nos mercados que mais contratam); esta lista aqui é O QUE ACEITAR
-# (custo zero — só comparação de string), então cobre TODO país
-# hispanofalante/lusófono, não só os 6 de LOCATIONS_INTL. Precisa ser
-# abrangente porque desde que _mercado_correspondente() virou allowlist
-# estrita (ver job.py) — escopo declarado que não bate aqui é REJEITADO,
-# mesmo vindo de um país que o projeto quer aceitar, então faltar um país
-# aqui vira falso negativo (barra vaga boa), não falso positivo.
-#
-# NÃO inclui "Brasil" porque esse pipeline é justamente o de vaga remota
-# FORA do Brasil (main.py/PERFIL_BR já cobre o Brasil). Vaga "Remote — US
-# only"/"Remote — India"/"Remote — Vietnam" segue sendo rejeitada, agora
-# inclusive quando o país não está no dicionário de job.py (ver
-# MEDIDO em _mercado_correspondente).
+# Mercados de onde a vaga remota é aceita (moedas fortes, Europa, América do Norte e contratação global)
 MERCADOS_REMOTO_ACEITOS_INTL = [
+    "Estados Unidos",
+    "Reino Unido",
+    "Alemanha",
+    "França",
+    "Canadá",
+    "Holanda",
+    "Suíça",
+    "Austrália",
     "Portugal",
     "Espanha",
+    "Irlanda",
+    "Bélgica",
+    "Suécia",
+    "Dinamarca",
+    "Noruega",
+    "Finlândia",
+    "Áustria",
+    "Itália",
     "México",
     "Colômbia",
     "Argentina",
     "Chile",
-    "Peru",
-    "Uruguai",
-    "Paraguai",
-    "Bolívia",
-    "Equador",
-    "Venezuela",
-    "Costa Rica",
-    "Panamá",
-    "Guatemala",
-    "Honduras",
-    "El Salvador",
-    "Nicarágua",
-    "República Dominicana",
-    "Porto Rico",
-    "Cuba",
-    "Angola",
-    "Moçambique",
-    "Cabo Verde",
+    "Brasil",
     "LATAM",
+    "Europa",
+    "EMEA",
+    "Worldwide",
+    "Global",
+    "Anywhere",
 ]
 
-# Eixo separado pra isso, controlado por ATIVAR_EIXO_IBERICO — dá pra
-# desligar sem mexer no resto do pipeline internacional (nem em
-# CIDADES_INTL). Quando ativo, vaga presencial/híbrida em Portugal/Espanha
-# passa também, mas marcada como "exploratória" na notificação (ver
-# main_intl.py), pra distinguir de vaga remota de verdade.
-# CIDADES_EUROPA_IBERICA (a lista de cidades) mudou pra config.py — o
-# pipeline BR (main.py) passou a ter o mesmo eixo (ver ATIVAR_EIXO_IBERICO_BR
-# lá), e as duas listas eram idênticas, então centralizei numa só pra não
-# correr risco de uma mudar e a outra ficar pra trás. Esse toggle aqui
-# continua LOCAL e independente do ATIVAR_EIXO_IBERICO_BR — são eixos de
-# pipelines diferentes, cada um liga/desliga por conta própria.
-#
-# DESLIGADO: do mercado internacional, só interessa vaga remota — vaga
-# presencial/híbrida em Lisboa/Madrid não é o que o usuário quer, mesmo
-# achada de propósito via LOCATIONS_INTL. Continua fácil de religar depois
-# (só o toggle), sem apagar nada da lista/lógica.
+# Não restringir idioma por texto no título: o usuário tem fluência em inglês
+# e francês, e os anúncios internacionais de tecnologia já são publicados em inglês.
+IDIOMAS_EXIGIDOS_INTL = None
+
+# Toggle para o eixo ibérico (vagas presenciais/híbridas em Portugal/Espanha)
 ATIVAR_EIXO_IBERICO = False
 
-# Indeed usa subdomínio por país, não parâmetro de location como o
-# LinkedIn. Confirmei ao vivo que es.indeed.com, pt.indeed.com e
-# mx.indeed.com funcionam e trazem vaga local de verdade (ex: "Analista de
-# Dados" em Lisboa, "Data Analyst" em Barcelona). co/ar/cl seguem o mesmo
-# padrão de domínio mas não testei individualmente — se algum não resolver
-# como esperado, o scraper só loga 0 vagas pra aquele país, não quebra o
-# resto.
-#
-# "Estados Unidos" (www.indeed.com) e "Reino Unido" (uk.indeed.com) foram
-# REMOVIDOS pelo mesmo motivo do LOCATIONS_INTL: domínio de país não filtra
-# idioma, e a maioria das vagas desses dois mercados pede inglês fluente —
-# era a fonte real das notificações de vaga em inglês.
-#
-# Mesmo aviso do Indeed BR original: tem proteção anti-bot que pode
-# bloquear acesso automatizado (principalmente de IP de nuvem/datacenter),
-# mesmo funcionando em teste manual.
+# Domínios Indeed para varredura internacional
 DOMINIOS_INDEED_INTL = {
-    "Espanha": "es.indeed.com",
-    "Portugal": "pt.indeed.com",
-    "México": "mx.indeed.com",
-    "Colômbia": "co.indeed.com",
-    "Argentina": "ar.indeed.com",
-    "Chile": "cl.indeed.com",
+    "Estados Unidos": "www.indeed.com",
+    "Reino Unido": "uk.indeed.com",
+    "França": "fr.indeed.com",
+    "Alemanha": "de.indeed.com",
+    "Canadá": "ca.indeed.com",
 }

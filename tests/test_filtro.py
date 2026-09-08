@@ -145,31 +145,24 @@ def test_extrair_escopo_remoto(nome, local, modalidade, esperado):
 # ---------------------------------------------------------------------------
 
 CASOS_COMBINA_COM = [
-    # Anti-regressão crítica (mesmo caso do teste de escopo, agora
-    # end-to-end): vaga americana sem sigla de estado tem que ser barrada
-    # no perfil internacional (que só aceita LATAM/Ibéria).
-    ("seattle-barrada-perfil-intl", "Senior Data Analyst", "Greater Seattle Area", "Remoto", PERFIL_INTL, False),
-    # Remota sem mercado declarado: só passa se o TÍTULO afirmar idioma/
-    # região (spanish/portuguese/latam/...) — regra adicionada depois que
-    # "Senior Data Analyst" remoto sem relação nenhuma com o mercado
-    # passava só por não ter nada que a rejeitasse.
-    ("spanish-speaking-sem-mercado-passa", "Spanish Speaking Data Analyst", "Remote", "Remoto", PERFIL_INTL, True),
-    ("data-analyst-latam-passa", "Data Analyst LATAM", "Remote", "Remoto", PERFIL_INTL, True),
-    ("sem-idioma-sem-mercado-barrada", "Senior Data Analyst", "Remote", "Remoto", PERFIL_INTL, False),
-    # Mercado CONFIRMADO no texto dispensa o sinal de idioma no título — o
-    # país hispanofalante já é o próprio sinal.
-    ("mercado-confirmado-dispensa-idioma-no-titulo", "Senior Data Analyst", "Remote - Espanha", "Remoto", PERFIL_INTL, True),
+    # Vaga com região não reconhecida é barrada no perfil internacional
+    ("seattle-barrada-perfil-intl", "Embedded Systems Engineer", "Greater Seattle Area", "Remoto", PERFIL_INTL, False),
+    # Remota internacional em mercados aceitos (moeda forte: França, EUA, Worldwide)
+    ("remota-intl-franca-passa", "Embedded Software Engineer", "Remote - France", "Remoto", PERFIL_INTL, True),
+    ("remota-intl-worldwide-passa", "Firmware Engineer", "Remote - Worldwide", "Remoto", PERFIL_INTL, True),
+    ("remota-intl-us-passa", "C++ Software Engineer", "Remote - United States", "Remoto", PERFIL_INTL, True),
+    ("remota-intl-espanha-passa", "DSP Engineer", "Remote - Espanha", "Remoto", PERFIL_INTL, True),
 
     # Perfil Brasil: cargo e cidade são checados em campos separados
     # (título vs. local) — cidade fora da lista aceita barra mesmo com
     # cargo batendo.
-    ("cidade-fora-da-lista-barrada", "Estágio em TI", "Nova York", "Presencial", PERFIL_BR, False),
+    ("cidade-fora-da-lista-barrada", "Engenheiro de Sistemas Embarcados", "Nova York", "Presencial", PERFIL_BR, False),
     ("cargo-fora-do-escopo-barrado", "Vendedor Externo", "Fortaleza, CE", "Presencial", PERFIL_BR, False),
-    ("cargo-forte-cidade-aceita-passa", "Estágio em TI", "Fortaleza, CE", "Presencial", PERFIL_BR, True),
+    ("cargo-forte-cidade-aceita-passa", "Engenheiro de Sistemas Embarcados", "Fortaleza, CE", "Presencial", PERFIL_BR, True),
     # keywords_ambiguo (ex: "Desenvolvedor") só conta com qualificador
-    # de dev/dados junto no título — sozinho é ruído de outra área.
+    # de tecnologia junto no título — sozinho é ruído de outra área.
     ("cargo-ambiguo-sem-qualificador-barrado", "Desenvolvedor", "Fortaleza, CE", "Presencial", PERFIL_BR, False),
-    ("cargo-ambiguo-com-qualificador-passa", "Desenvolvedor React Jr", "Fortaleza, CE", "Presencial", PERFIL_BR, True),
+    ("cargo-ambiguo-com-qualificador-passa", "Desenvolvedor C++ Jr", "Fortaleza, CE", "Presencial", PERFIL_BR, True),
 ]
 
 
